@@ -88,7 +88,7 @@ type Outcome struct {
 func NewOutcome(value interface{}) (*Outcome, error) {
 	expr, err := parser.ParseExpr(fmt.Sprint(value))
 	if err != nil {
-		return nil, ErrInvalidOutcome
+		return nil, fmt.Errorf("%w: %v", ErrInvalidOutcome, err)
 	}
 	switch expr.(type) {
 	case *ast.Ident, *ast.BasicLit:
@@ -109,7 +109,7 @@ type Condition struct {
 func (c *Condition) Initialize() error {
 	evaluablePredicate, err := govaluate.NewEvaluableExpression(c.Predicate)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %v", ErrInvalidCondition, err)
 	}
 	c.evaluablePredicate = evaluablePredicate
 
@@ -140,15 +140,15 @@ func (c *Condition) AddBranch(value interface{}, nextNode *Node) {
 func NewCondition(predicate string) (*Condition, error) {
 	expr, err := parser.ParseExpr(predicate)
 	if err != nil {
-		return nil, ErrInvalidCondition
+		return nil, fmt.Errorf("%w: %v", ErrInvalidCondition, err)
 	}
 	if _, ok := expr.(*ast.BinaryExpr); !ok {
 		// Condition should not be unary expression to distinguish condition and outcome.
-		return nil, ErrInvalidCondition
+		return nil, fmt.Errorf("%w: %v", ErrInvalidCondition, err)
 	}
 	evaluablePredicate, err := govaluate.NewEvaluableExpression(predicate)
 	if err != nil {
-		return nil, ErrInvalidCondition
+		return nil, fmt.Errorf("%w: %v", ErrInvalidCondition, err)
 	}
 	return &Condition{
 		Predicate:          predicate,
@@ -160,7 +160,7 @@ func NewCondition(predicate string) (*Condition, error) {
 func (c *Condition) Next(params map[string]interface{}) (*Node, error) {
 	value, err := c.evaluablePredicate.Evaluate(params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", ErrUndecidable, err)
 	}
 	node, ok := c.valueToNextNode[value]
 	if !ok {
