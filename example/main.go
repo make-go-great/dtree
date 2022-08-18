@@ -28,7 +28,7 @@ func main() {
 		panic(err)
 	}
 
-	tree, err := dtree.NewTreeFromJson([]byte(bytes))
+	tree, err := dtree.NewTreeFromJson(bytes)
 	if err != nil {
 		panic(err)
 	}
