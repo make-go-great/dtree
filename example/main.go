@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"dtree"
+	"github.com/make-go-great/dtree"
 )
 
 func main() {
