@@ -6,20 +6,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTree(t *testing.T) {
-	//             salary >= 50000
-	//            /              \
-	//          yes              no
-	//          /                  \
+func TestDecide(t *testing.T) {
+	//              salary >= 50000
+	//             /              \
+	//           yes              no
+	//           /                  \
 	//  commutation_hour >= 2h  decline
-	//        /              \
-	//      no               yes
-	//      /                  \
-	// free_coffee == true   decline
-	//     /    \
-	//   yes    no
-	//   /        \
-	// accept   decline
+	//          /            \
+	//         no             yes
+	//        /                \
+	//  free_coffee == true  decline
+	//     /          \
+	//   yes           no
+	//   /              \
+	// accept         decline
 
 	// outcome nodes
 	declineOffer, err := NewOutcome("decline")
@@ -36,14 +36,14 @@ func TestTree(t *testing.T) {
 	require.NoError(t, err)
 
 	// branches
-	salary.Branches[true] = NewConditionNode(commutationHour)
-	salary.Branches[false] = NewOutcomeNode(declineOffer)
-	commutationHour.Branches[true] = NewOutcomeNode(declineOffer)
-	commutationHour.Branches[false] = NewConditionNode(freeCoffee)
-	freeCoffee.Branches[true] = NewOutcomeNode(acceptOffer)
-	freeCoffee.Branches[false] = NewOutcomeNode(declineOffer)
+	salary.Branches[true] = commutationHour
+	salary.Branches[false] = declineOffer
+	commutationHour.Branches[true] = declineOffer
+	commutationHour.Branches[false] = freeCoffee
+	freeCoffee.Branches[true] = acceptOffer
+	freeCoffee.Branches[false] = declineOffer
 
-	tree := &Tree{Root: NewConditionNode(salary)}
+	tree := &Tree{Root: salary}
 	for _, tc := range []struct {
 		in  map[string]interface{}
 		out string
