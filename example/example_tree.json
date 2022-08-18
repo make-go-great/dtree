@@ -1,0 +1,61 @@
+{
+  "root": {
+    "condition": {
+      "predicate": "salary >= 50000",
+      "branches": [
+        {
+          "value": true,
+          "next_node": {
+            "condition": {
+              "predicate": "commutation_hour >= 2",
+              "branches": [
+                {
+                  "value": true,
+                  "next_node": {
+                    "outcome": {
+                      "value": "decline"
+                    }
+                  }
+                },
+                {
+                  "value": false,
+                  "next_node": {
+                    "condition": {
+                      "predicate": "free_coffee == true",
+                      "branches": [
+                        {
+                          "value": true,
+                          "next_node": {
+                            "outcome": {
+                              "value": "accept"
+                            }
+                          }
+                        },
+                        {
+                          "value": false,
+                          "next_node": {
+                            "outcome": {
+                              "value": "decline"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "value": false,
+          "next_node": {
+            "outcome": {
+              "value": "decline"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

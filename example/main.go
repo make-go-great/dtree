@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/make-go-great/dtree"
 )
@@ -22,70 +23,12 @@ func main() {
 	//   /              \
 	// accept         decline
 
-	jsonBytes := `
-{
-  "root": {
-    "condition": {
-      "predicate": "salary >= 50000",
-      "branches": [
-        {
-          "value": true,
-          "next_node": {
-            "condition": {
-              "predicate": "commutation_hour >= 2",
-              "branches": [
-                {
-                  "value": true,
-                  "next_node": {
-                    "outcome": {
-                      "value": "decline"
-                    }
-                  }
-                },
-                {
-                  "value": false,
-                  "next_node": {
-                    "condition": {
-                      "predicate": "free_coffee == true",
-                      "branches": [
-                        {
-                          "value": true,
-                          "next_node": {
-                            "outcome": {
-                              "value": "accept"
-                            }
-                          }
-                        },
-                        {
-                          "value": false,
-                          "next_node": {
-                            "outcome": {
-                              "value": "decline"
-                            }
-                          }
-                        }
-                      ]
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
-          "value": false,
-          "next_node": {
-            "outcome": {
-              "value": "decline"
-            }
-          }
-        }
-      ]
-    }
-  }
-}`
+	bytes, err := os.ReadFile("example/example_tree.json")
+	if err != nil {
+		panic(err)
+	}
 
-	tree, err := dtree.NewTreeFromJson([]byte(jsonBytes))
+	tree, err := dtree.NewTreeFromJson([]byte(bytes))
 	if err != nil {
 		panic(err)
 	}
