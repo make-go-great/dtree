@@ -1,6 +1,7 @@
 package dtree
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"go/ast"
@@ -16,35 +17,70 @@ var (
 )
 
 type Tree struct {
-	Root Node
+	Root *Node `json:"root"`
 }
 
-type Node interface {
-	Next(params map[string]interface{}) (Node, error)
+func NewTreeFromJson(bytes []byte) (*Tree, error) {
+	var tree *Tree
+	if err := json.Unmarshal(bytes, &tree); err != nil {
+		return nil, err
+	}
+	if err := tree.Initialize(); err != nil {
+		return nil, err
+	}
+	return tree, nil
+}
+
+func (t *Tree) Initialize() error {
+	if t == nil || t.Root == nil || t.Root.Condition == nil {
+		return nil
+	}
+
+	queue := []*Condition{t.Root.Condition}
+	for len(queue) > 0 {
+		head := queue[0]
+		queue = queue[1:]
+		if err := head.Initialize(); err != nil {
+			return err
+		}
+
+		for _, branch := range head.Branches {
+			if branch.NextNode != nil && branch.NextNode.Condition != nil {
+				queue = append(queue, branch.NextNode.Condition)
+			}
+		}
+	}
+
+	return nil
+}
+
+type Branch struct {
+	Value    interface{} `json:"value"`
+	NextNode *Node       `json:"next_node"`
+}
+
+type Node struct {
+	Outcome   *Outcome   `json:"outcome,omitempty"`
+	Condition *Condition `json:"condition,omitempty"`
 }
 
 func (t *Tree) Decide(params map[string]interface{}) (interface{}, error) {
 	var err error
 	node := t.Root
-	for _, ok := node.(*Condition); ok; _, ok = node.(*Condition) {
-		node, err = node.Next(params)
+	for node != nil && node.Condition != nil {
+		node, err = node.Condition.Next(params)
 		if err != nil {
 			return nil, err
 		}
 	}
-	outcome, ok := node.(*Outcome)
-	if !ok {
+	if node == nil || node.Outcome == nil {
 		return nil, ErrUndecidable
 	}
-	return outcome.Value, nil
+	return node.Outcome.Value, nil
 }
 
 type Outcome struct {
-	Value interface{}
-}
-
-func (o *Outcome) Next(_ map[string]interface{}) (Node, error) {
-	return nil, nil
+	Value interface{} `json:"value"`
 }
 
 // NewOutcome returns a new Outcome node.
@@ -63,8 +99,35 @@ func NewOutcome(value interface{}) (*Outcome, error) {
 }
 
 type Condition struct {
-	EvaluablePredicate *govaluate.EvaluableExpression
-	Branches           map[interface{}]Node
+	branchMap          map[interface{}]*Node
+	evaluablePredicate *govaluate.EvaluableExpression
+
+	Branches  []*Branch `json:"branches"`
+	Predicate string    `json:"predicate"`
+}
+
+func (c *Condition) Initialize() error {
+	evaluablePredicate, err := govaluate.NewEvaluableExpression(c.Predicate)
+	if err != nil {
+		return err
+	}
+	c.evaluablePredicate = evaluablePredicate
+
+	c.branchMap = make(map[interface{}]*Node)
+	for _, branch := range c.Branches {
+		c.branchMap[branch.Value] = branch.NextNode
+	}
+
+	return nil
+}
+
+func (c *Condition) AddBranch(value interface{}, nextNode *Node) {
+	c.branchMap[value] = nextNode
+	branch := &Branch{
+		Value:    value,
+		NextNode: nextNode,
+	}
+	c.Branches = append(c.Branches, branch)
 }
 
 // NewCondition returns a new Condition node. The value must be binary expression.
@@ -84,17 +147,18 @@ func NewCondition(predicate string) (*Condition, error) {
 		return nil, ErrInvalidCondition
 	}
 	return &Condition{
-		EvaluablePredicate: evaluablePredicate,
-		Branches:           map[interface{}]Node{},
+		Predicate:          predicate,
+		evaluablePredicate: evaluablePredicate,
+		branchMap:          map[interface{}]*Node{},
 	}, nil
 }
 
-func (c *Condition) Next(params map[string]interface{}) (Node, error) {
-	value, err := c.EvaluablePredicate.Evaluate(params)
+func (c *Condition) Next(params map[string]interface{}) (*Node, error) {
+	value, err := c.evaluablePredicate.Evaluate(params)
 	if err != nil {
 		return nil, err
 	}
-	node, ok := c.Branches[value]
+	node, ok := c.branchMap[value]
 	if !ok {
 		return nil, ErrUndecidable
 	}
