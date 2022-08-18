@@ -2,6 +2,7 @@ package dtree
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -132,6 +133,8 @@ func TestDecide(t *testing.T) {
 		require.NoError(t, terr)
 		require.Equal(t, tc.out, outcome)
 	}
+	j, err := json.Marshal(tree)
+	fmt.Println(string(j))
 }
 
 func TestMarshal(t *testing.T) {
@@ -187,52 +190,52 @@ func TestMarshal(t *testing.T) {
 	require.Len(t, salaryNode.Condition.Branches, 2)
 	require.Equal(t, true, salaryNode.Condition.Branches[0].Value)
 	require.Equal(t, false, salaryNode.Condition.Branches[1].Value)
-	require.Len(t, salaryNode.Condition.branchMap, 2)
-	require.Contains(t, salaryNode.Condition.branchMap, true)
-	require.Contains(t, salaryNode.Condition.branchMap, false)
-	require.Equal(t, salaryNode.Condition.Branches[0].NextNode, salaryNode.Condition.branchMap[true])
-	require.Equal(t, salaryNode.Condition.Branches[1].NextNode, salaryNode.Condition.branchMap[false])
+	require.Len(t, salaryNode.Condition.valueToNextNode, 2)
+	require.Contains(t, salaryNode.Condition.valueToNextNode, true)
+	require.Contains(t, salaryNode.Condition.valueToNextNode, false)
+	require.Equal(t, salaryNode.Condition.Branches[0].Next, salaryNode.Condition.valueToNextNode[true])
+	require.Equal(t, salaryNode.Condition.Branches[1].Next, salaryNode.Condition.valueToNextNode[false])
 
-	salaryFalseNode := newTree.Root.Condition.branchMap[false]
+	salaryFalseNode := newTree.Root.Condition.valueToNextNode[false]
 	require.Nil(t, salaryFalseNode.Condition)
 	require.NotNil(t, salaryFalseNode.Outcome)
 	require.Equal(t, "decline", salaryFalseNode.Outcome.Value)
 
-	commutationHourNode := newTree.Root.Condition.branchMap[true]
+	commutationHourNode := newTree.Root.Condition.valueToNextNode[true]
 	require.Equal(t, "commutation_hour >= 2", commutationHourNode.Condition.Predicate)
 	require.NotNil(t, commutationHourNode.Condition.evaluablePredicate)
 	require.Len(t, commutationHourNode.Condition.Branches, 2)
 	require.Equal(t, true, commutationHourNode.Condition.Branches[0].Value)
 	require.Equal(t, false, commutationHourNode.Condition.Branches[1].Value)
-	require.Len(t, commutationHourNode.Condition.branchMap, 2)
-	require.Contains(t, commutationHourNode.Condition.branchMap, true)
-	require.Contains(t, commutationHourNode.Condition.branchMap, false)
-	require.Equal(t, commutationHourNode.Condition.Branches[0].NextNode, commutationHourNode.Condition.branchMap[true])
-	require.Equal(t, commutationHourNode.Condition.Branches[1].NextNode, commutationHourNode.Condition.branchMap[false])
+	require.Len(t, commutationHourNode.Condition.valueToNextNode, 2)
+	require.Contains(t, commutationHourNode.Condition.valueToNextNode, true)
+	require.Contains(t, commutationHourNode.Condition.valueToNextNode, false)
+	require.Equal(t, commutationHourNode.Condition.Branches[0].Next, commutationHourNode.Condition.valueToNextNode[true])
+	require.Equal(t, commutationHourNode.Condition.Branches[1].Next, commutationHourNode.Condition.valueToNextNode[false])
 
-	commutationTrueNode := commutationHourNode.Condition.branchMap[true]
+	commutationTrueNode := commutationHourNode.Condition.valueToNextNode[true]
 	require.Nil(t, commutationTrueNode.Condition)
 	require.NotNil(t, commutationTrueNode.Outcome)
 	require.Equal(t, "decline", commutationTrueNode.Outcome.Value)
 
-	freeCoffeeNode := commutationHourNode.Condition.branchMap[false]
+	freeCoffeeNode := commutationHourNode.Condition.valueToNextNode[false]
 	require.Equal(t, "free_coffee == true", freeCoffeeNode.Condition.Predicate)
 	require.NotNil(t, freeCoffeeNode.Condition.evaluablePredicate)
 	require.Len(t, freeCoffeeNode.Condition.Branches, 2)
 	require.Equal(t, true, freeCoffeeNode.Condition.Branches[0].Value)
 	require.Equal(t, false, freeCoffeeNode.Condition.Branches[1].Value)
-	require.Len(t, freeCoffeeNode.Condition.branchMap, 2)
-	require.Contains(t, freeCoffeeNode.Condition.branchMap, true)
-	require.Contains(t, freeCoffeeNode.Condition.branchMap, false)
-	require.Equal(t, freeCoffeeNode.Condition.Branches[0].NextNode, freeCoffeeNode.Condition.branchMap[true])
-	require.Equal(t, freeCoffeeNode.Condition.Branches[1].NextNode, freeCoffeeNode.Condition.branchMap[false])
+	require.Len(t, freeCoffeeNode.Condition.valueToNextNode, 2)
+	require.Contains(t, freeCoffeeNode.Condition.valueToNextNode, true)
+	require.Contains(t, freeCoffeeNode.Condition.valueToNextNode, false)
+	require.Equal(t, freeCoffeeNode.Condition.Branches[0].Next, freeCoffeeNode.Condition.valueToNextNode[true])
+	require.Equal(t, freeCoffeeNode.Condition.Branches[1].Next, freeCoffeeNode.Condition.valueToNextNode[false])
 
-	freeCoffeeFalseNode := freeCoffeeNode.Condition.branchMap[false]
+	freeCoffeeFalseNode := freeCoffeeNode.Condition.valueToNextNode[false]
 	require.Nil(t, freeCoffeeFalseNode.Condition)
 	require.NotNil(t, freeCoffeeFalseNode.Outcome)
 	require.Equal(t, "decline", freeCoffeeFalseNode.Outcome.Value)
 
-	freeCoffeeTrueNode := freeCoffeeNode.Condition.branchMap[true]
+	freeCoffeeTrueNode := freeCoffeeNode.Condition.valueToNextNode[true]
 	require.Nil(t, freeCoffeeTrueNode.Condition)
 	require.NotNil(t, freeCoffeeTrueNode.Outcome)
 	require.Equal(t, "accept", freeCoffeeTrueNode.Outcome.Value)
@@ -330,27 +333,21 @@ func TestDecide_Undecidable(t *testing.T) {
 	jsonTree := `
 {
 	"root": {
-		"condition": {
-			"predicate": "x*x",
-			"branches": [
-				{
-					"value": 1,
-					"next_node": {
-						"outcome": {
-							"value": "one"
-						}
-					}
-				},
-				{
-					"value": 4,
-					"next_node": {
-						"outcome": {
-							"value": "four"
-						}
-					}
+		"predicate": "x*x",
+		"branches": [
+			{
+				"value": 1,
+				"next": {
+					   "outcome": "one"
 				}
-			]
-		}
+			},
+			{
+				"value": 4,
+				"next": {
+					   "outcome": "four"
+				}
+			}
+		]
 	}
 }
 `

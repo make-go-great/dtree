@@ -42,5 +42,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(outcome)
+	fmt.Println(outcome == "decline")
 }

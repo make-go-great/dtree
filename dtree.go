@@ -45,8 +45,8 @@ func (t *Tree) Initialize() error {
 		}
 
 		for _, branch := range head.Branches {
-			if branch.NextNode != nil && branch.NextNode.Condition != nil {
-				queue = append(queue, branch.NextNode.Condition)
+			if branch.Next != nil && branch.Next.Condition != nil {
+				queue = append(queue, branch.Next.Condition)
 			}
 		}
 	}
@@ -55,13 +55,13 @@ func (t *Tree) Initialize() error {
 }
 
 type Branch struct {
-	Value    interface{} `json:"value"`
-	NextNode *Node       `json:"next_node"`
+	Value interface{} `json:"value"`
+	Next  *Node       `json:"next"`
 }
 
 type Node struct {
-	Outcome   *Outcome   `json:"outcome,omitempty"`
-	Condition *Condition `json:"condition,omitempty"`
+	*Outcome
+	*Condition
 }
 
 func (t *Tree) Decide(params map[string]interface{}) (interface{}, error) {
@@ -80,7 +80,7 @@ func (t *Tree) Decide(params map[string]interface{}) (interface{}, error) {
 }
 
 type Outcome struct {
-	Value interface{} `json:"value"`
+	Value interface{} `json:"outcome"`
 }
 
 // NewOutcome returns a new Outcome node.
@@ -99,11 +99,11 @@ func NewOutcome(value interface{}) (*Outcome, error) {
 }
 
 type Condition struct {
-	branchMap          map[interface{}]*Node
+	valueToNextNode    map[interface{}]*Node
 	evaluablePredicate *govaluate.EvaluableExpression
 
-	Branches  []*Branch `json:"branches"`
 	Predicate string    `json:"predicate"`
+	Branches  []*Branch `json:"branches"`
 }
 
 func (c *Condition) Initialize() error {
@@ -113,23 +113,23 @@ func (c *Condition) Initialize() error {
 	}
 	c.evaluablePredicate = evaluablePredicate
 
-	c.branchMap = make(map[interface{}]*Node, len(c.Branches))
+	c.valueToNextNode = make(map[interface{}]*Node, len(c.Branches))
 	for _, branch := range c.Branches {
-		c.branchMap[branch.Value] = branch.NextNode
+		c.valueToNextNode[branch.Value] = branch.Next
 	}
 
 	return nil
 }
 
 func (c *Condition) AddBranch(value interface{}, nextNode *Node) {
-	if c.branchMap == nil {
-		c.branchMap = make(map[interface{}]*Node)
+	if c.valueToNextNode == nil {
+		c.valueToNextNode = make(map[interface{}]*Node)
 	}
-	c.branchMap[value] = nextNode
+	c.valueToNextNode[value] = nextNode
 
 	branch := &Branch{
-		Value:    value,
-		NextNode: nextNode,
+		Value: value,
+		Next:  nextNode,
 	}
 	c.Branches = append(c.Branches, branch)
 }
@@ -153,7 +153,7 @@ func NewCondition(predicate string) (*Condition, error) {
 	return &Condition{
 		Predicate:          predicate,
 		evaluablePredicate: evaluablePredicate,
-		branchMap:          map[interface{}]*Node{},
+		valueToNextNode:    map[interface{}]*Node{},
 	}, nil
 }
 
@@ -162,7 +162,7 @@ func (c *Condition) Next(params map[string]interface{}) (*Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	node, ok := c.branchMap[value]
+	node, ok := c.valueToNextNode[value]
 	if !ok {
 		return nil, ErrUndecidable
 	}
