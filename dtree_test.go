@@ -23,27 +23,17 @@ func TestTree(t *testing.T) {
 
 	// outcome nodes
 	declineOffer, err := NewOutcome("decline")
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
 	acceptOffer, err := NewOutcome("accept")
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
 
 	// condition nodes
 	salary, err := NewCondition("salary >= 50000")
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
 	commutationHour, err := NewCondition("commutation_hour >= 2")
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
 	freeCoffee, err := NewCondition("free_coffee == true")
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
 
 	// branches
 	salary.Branches[true] = NewConditionNode(commutationHour)
@@ -137,8 +127,8 @@ func TestTree(t *testing.T) {
 			out: "decline",
 		},
 	} {
-		outcome, err := tree.Decide(tc.in)
-		require.NoError(t, err)
+		outcome, terr := tree.Decide(tc.in)
+		require.NoError(t, terr)
 		require.Equal(t, tc.out, outcome)
 	}
 }
