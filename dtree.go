@@ -21,14 +21,14 @@ type Tree struct {
 }
 
 func NewTreeFromJson(bytes []byte) (*Tree, error) {
-	var tree *Tree
+	tree := Tree{}
 	if err := json.Unmarshal(bytes, &tree); err != nil {
 		return nil, err
 	}
 	if err := tree.Initialize(); err != nil {
 		return nil, err
 	}
-	return tree, nil
+	return &tree, nil
 }
 
 func (t *Tree) Initialize() error {
