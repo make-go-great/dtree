@@ -71,15 +71,16 @@ func NewOutcome(value interface{}) (*Outcome, error) {
 }
 
 type Condition struct {
-	Predicate *govaluate.EvaluableExpression
-	Branches  map[interface{}]*Node
+	Predicate          string
+	EvaluablePredicate *govaluate.EvaluableExpression
+	Branches           map[interface{}]*Node
 }
 
 // NewCondition returns a new Condition node. The value must be binary expression.
 // If value accepts unary expression, it'd be ambiguous for a value=`X`.
 // It can be a boolean expression `X` (equivalent to `X == true`) or a string outcome `X`.
-func NewCondition(value string) (*Condition, error) {
-	expr, err := parser.ParseExpr(value)
+func NewCondition(predicate string) (*Condition, error) {
+	expr, err := parser.ParseExpr(predicate)
 	if err != nil {
 		return nil, ErrInvalidCondition
 	}
@@ -87,15 +88,19 @@ func NewCondition(value string) (*Condition, error) {
 		// Condition should not be unary expression to distinguish condition and outcome.
 		return nil, ErrInvalidCondition
 	}
-	predicate, err := govaluate.NewEvaluableExpression(value)
+	evaluablePredicate, err := govaluate.NewEvaluableExpression(predicate)
 	if err != nil {
 		return nil, ErrInvalidCondition
 	}
-	return &Condition{Predicate: predicate, Branches: map[interface{}]*Node{}}, nil
+	return &Condition{
+		Predicate:          predicate,
+		EvaluablePredicate: evaluablePredicate,
+		Branches:           map[interface{}]*Node{},
+	}, nil
 }
 
 func (c *Condition) Decide(params map[string]interface{}) (*Node, error) {
-	value, err := c.Predicate.Evaluate(params)
+	value, err := c.EvaluablePredicate.Evaluate(params)
 	if err != nil {
 		return nil, err
 	}
