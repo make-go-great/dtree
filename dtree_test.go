@@ -7,18 +7,18 @@ import (
 )
 
 func TestTree(t *testing.T) {
-	// 			  salary >= 50000
-	// 			   /             \
-	// 			 yes              no
-	// 		     /                  \
-	//   commutation_hour >= 2h   decline
-	// 		  /              \
-	// 		 no              yes
-	// 		/                  \
-	// free_coffee == true    decline
-	// 	   /    \
-	// 	 yes    no
-	// 	 /        \
+	//             salary >= 50000
+	//            /              \
+	//          yes              no
+	//          /                  \
+	//  commutation_hour >= 2h  decline
+	//        /              \
+	//      no               yes
+	//      /                  \
+	// free_coffee == true   decline
+	//     /    \
+	//   yes    no
+	//   /        \
 	// accept   decline
 
 	// outcome nodes
