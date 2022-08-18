@@ -122,7 +122,11 @@ func (c *Condition) Initialize() error {
 }
 
 func (c *Condition) AddBranch(value interface{}, nextNode *Node) {
+	if c.branchMap == nil {
+		c.branchMap = make(map[interface{}]*Node)
+	}
 	c.branchMap[value] = nextNode
+
 	branch := &Branch{
 		Value:    value,
 		NextNode: nextNode,
