@@ -113,7 +113,7 @@ func (c *Condition) Initialize() error {
 	}
 	c.evaluablePredicate = evaluablePredicate
 
-	c.branchMap = make(map[interface{}]*Node)
+	c.branchMap = make(map[interface{}]*Node, len(c.Branches))
 	for _, branch := range c.Branches {
 		c.branchMap[branch.Value] = branch.NextNode
 	}

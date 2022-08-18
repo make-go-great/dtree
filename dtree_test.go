@@ -325,3 +325,44 @@ func TestMarshal(t *testing.T) {
 		require.Equal(t, tc.out, outcome)
 	}
 }
+
+func TestDecide_Undecidable(t *testing.T) {
+	jsonTree := `
+{
+	"root": {
+		"condition": {
+			"predicate": "x*x",
+			"branches": [
+				{
+					"value": 1,
+					"next_node": {
+						"outcome": {
+							"value": "one"
+						}
+					}
+				},
+				{
+					"value": 4,
+					"next_node": {
+						"outcome": {
+							"value": "four"
+						}
+					}
+				}
+			]
+		}
+	}
+}
+`
+	tree, err := NewTreeFromJson([]byte(jsonTree))
+	require.NoError(t, err)
+
+	out, err := tree.Decide(map[string]interface{}{"x": 1})
+	require.Equal(t, out, "one")
+
+	out, err = tree.Decide(map[string]interface{}{"x": 2})
+	require.Equal(t, out, "four")
+
+	_, err = tree.Decide(map[string]interface{}{"x": 10})
+	require.ErrorIs(t, err, ErrUndecidable)
+}
